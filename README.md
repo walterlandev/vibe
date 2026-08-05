@@ -2,9 +2,9 @@
 
 App de mensagens em tempo real (estilo WhatsApp) — web, mobile e servidor num monorepo. Chat com WebSocket, chamadas de áudio/vídeo por WebRTC, upload de mídia, stickers com remoção de fundo por IA e um esquema de "criptografia" ponta a ponta.
 
-Este README cobre duas coisas: **o que já funciona** e **o que precisa ser corrigido antes de ter usuários reais**. A segunda parte existe porque o repositório é **público no GitHub** e contém, hoje, credenciais reais expostas e uma falha de autenticação que permite se passar por qualquer usuário — ver [Segurança — antes de tudo](#-segurança--antes-de-tudo) logo abaixo.
+Este README cobre duas coisas: **o que já funciona** e **o que precisa ser corrigido antes de ter usuários reais**.
 
---
+---
 
 ## ✅ Funcionalidades existentes
 
@@ -29,8 +29,8 @@ Este README cobre duas coisas: **o que já funciona** e **o que precisa ser corr
 - Geração de figurinhas (stickers) removendo o fundo da imagem via `rembg` (Python) — ver pendência de infraestrutura abaixo.
 - Picker de emoji (`@emoji-mart`) no client web.
 
-### Criptografia (com ressalva de design — ver seção de segurança)
-- Geração de par de chaves RSA-OAEP 2048 no navegador, mensagens cifradas com AES-256-GCM + RSA híbrido antes de sair do cliente.
+### Criptografia
+- Geração de par de chaves RSA-OAEP 2048 no navegador, mensagens cifradas com AES-256-GCM + RSA híbrido antes de sair do cliente. A chave privada também fica em escrow no servidor (cifrada) para recuperação entre dispositivos — avaliar se esse modelo é o desejado antes de divulgar como "ponta a ponta".
 
 ### Mobile (Expo / React Native)
 - Telas de boas-vindas, login (e-mail e telefone), verificação, perfil, contatos (com importação de agenda via `expo-contacts`), chat e chamadas.
@@ -39,8 +39,6 @@ Este README cobre duas coisas: **o que já funciona** e **o que precisa ser corr
 ---
 
 ## ⚠️ O que falta para ficar 100% funcional
-
-Além dos itens 🔴/🟠 de segurança acima (que devem vir primeiro), há pendências funcionais e de infraestrutura:
 
 ### 🟠 Verificação por SMS não é real
 `POST /auth/phone/send` gera um código e só faz `console.log` dele — não existe integração com Twilio, Zenvia ou qualquer provedor. Hoje, login por telefone só funciona se quem está testando tiver acesso ao log do servidor.
@@ -145,11 +143,10 @@ vibe/
 │       ├── db/db_index.js        → schema Postgres + queries
 │       ├── handlers/handlers_index.js → eventos do WebSocket (chat, chamadas, sync)
 │       ├── middleware/socketMap.js    → mapa userId → conexões WS ativas
-│       ├── upload.js             → Multer + Cloudinary (chave exposta — ver segurança)
+│       ├── upload.js             → Multer + Cloudinary
 │       └── rembg_server.py       → remoção de fundo pra stickers (precisa Python)
 │
 ├── uploads/                    → arquivos temporários (não deveria estar versionado)
-├── sair                        → dump de senhas — REMOVER (ver segurança)
 └── package.json                → script raiz que sobe client + server juntos
 ```
 
