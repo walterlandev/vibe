@@ -4,43 +4,7 @@ App de mensagens em tempo real (estilo WhatsApp) — web, mobile e servidor num 
 
 Este README cobre duas coisas: **o que já funciona** e **o que precisa ser corrigido antes de ter usuários reais**. A segunda parte existe porque o repositório é **público no GitHub** e contém, hoje, credenciais reais expostas e uma falha de autenticação que permite se passar por qualquer usuário — ver [Segurança — antes de tudo](#-segurança--antes-de-tudo) logo abaixo.
 
----
-
-## 🚨 Segurança — antes de tudo
-
-### 🔴 Credenciais reais expostas no código-fonte público
-
-`server/src/upload.js` (linhas 11-13) tem uma chave real do Cloudinary como valor padrão, embutida no código:
-
-```js
-cloud_name: process.env.CLOUDINARY_CLOUD_NAME ?? 'du2lsurb1',
-api_key:    process.env.CLOUDINARY_API_KEY    ?? '881134422677227',
-api_secret: process.env.CLOUDINARY_API_SECRET ?? '_KVw7rUuPQHMc2hFqQ-0_d37li4',
-```
-
-Qualquer pessoa que veja o repositório (ele é público) tem acesso de API à sua conta Cloudinary — pode subir, listar ou apagar arquivos, e isso pode gerar custo na sua conta.
-→ **Ação imediata:** revogar/regenerar essa chave no painel do Cloudinary, remover os valores literais do código (deixar só `process.env.CLOUDINARY_...`, sem fallback) e configurar a chave nova via `.env`/variável de ambiente no servidor de produção.
-
-### 🔴 Arquivo `sair` na raiz — dump de senhas de usuários reais
-
-O arquivo `sair` (commitado desde o primeiro commit, `c4b06d4`) é a saída de uma consulta SQL com e-mail e **hash de senha (bcrypt)** de usuários reais, incluindo `wasgba@live.com`.
-→ **Ação imediata:** apagar o arquivo e, como ele está no histórico desde o commit inicial, considerar reescrever o histórico do repositório (`git filter-repo` ou similar) — só apagar num commit novo não remove do histórico público. Depois, trocar a senha desses usuários por precaução, já que o hash ficou exposto.
-
-### 🔴 Autenticação do WebSocket não verifica identidade nenhuma
-
-O login por HTTP (`/auth/login`) gera um JWT corretamente. Mas o chat em si roda todo por WebSocket, e a conexão WebSocket **nunca confere esse JWT**. O evento `auth` do WebSocket (`server/src/handlers/handlers_index.js`, função `auth`) recebe `{ userId, name, avatarUrl }` do cliente e simplesmente **confia** no `userId` informado — não valida contra nenhum token.
-
-Na prática: qualquer pessoa pode abrir uma conexão WebSocket direto (sem passar pelo login) e mandar `{ event: 'auth', userId: '<qualquer id>', name: 'x' }` para assumir a identidade de outro usuário — ler conversas, contatos, mandar mensagens em nome dele. Os IDs de usuário são gerados com `Math.random()` (`db_index.js`, função `generateId`), não são criptograficamente difíceis de adivinhar, e — pior — vários já vazaram publicamente no arquivo `sair` citado acima.
-→ **Correção:** o evento `auth` do WebSocket precisa validar o JWT recebido do cliente (mandar o token no payload do evento `auth` e chamar `jwt.verify` no servidor, como já é feito nas rotas HTTP) em vez de confiar no `userId` enviado.
-
-### 🟠 "Criptografia ponta a ponta" tem uma porta dos fundos
-
-O app gera um par de chaves RSA no cliente (`useCrypto.js`) e cifra mensagens — até aí, é E2E de verdade. Mas a chave privada também é enviada para o servidor como "escrow" (`/api/keys/register`), cifrada com uma `MASTER_KEY` que **também tem um valor padrão hardcoded** (`server/src/index.js`, linha 24: `'vibe_master_key_troca_em_producao_32c'`). Existe uma rota `POST /api/admin/decrypt` que decifra a chave privada de qualquer usuário só conferindo `adminPassword === process.env.ADMIN_PASSWORD` — sem limite de tentativas, sem log além de um `console.warn`.
-
-Isso significa que a "criptografia ponta a ponta" pode ser desfeita por quem tiver a senha de admin (ou, sem `.env` configurado, pela senha padrão hardcoded). Não é uma falha de implementação — é uma decisão de design que contradiz o que a função promete ao usuário.
-→ **Decisão a tomar:** ou remove o escrow/rota de admin e assume que E2E de verdade significa que nem o servidor recupera a chave (perda de dispositivo = perda de histórico, a menos que sincronize via `sync_*` entre sessões ativas, que já existe), ou deixa de chamar isso de "ponta a ponta" e documenta pro usuário que o servidor consegue acessar o conteúdo mediante ordem judicial/senha de admin.
-
----
+--
 
 ## ✅ Funcionalidades existentes
 
