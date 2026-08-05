@@ -8,9 +8,9 @@ const cloudinary = require('cloudinary').v2;
 // ── Configura Cloudinary ──────────────────────────────────────────────────────
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME ?? 'du2lsurb1',
-  api_key:    process.env.CLOUDINARY_API_KEY    ?? '881134422677227',
-  api_secret: process.env.CLOUDINARY_API_SECRET ?? '_KVw7rUuPQHMc2hFqQ-0_d37li4',
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 // ── Pasta temporária local (para o multer salvar antes de enviar) ─────────────

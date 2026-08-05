@@ -20,9 +20,14 @@ const app    = express();
 const server = http.createServer(app);
 const wss    = new WebSocket.Server({ server });
 
-const JWT_SECRET  = process.env.JWT_SECRET  ?? 'vibe_dev_secret';
-const MASTER_KEY  = process.env.MASTER_KEY  ?? 'vibe_master_key_troca_em_producao_32c';
+const JWT_SECRET  = process.env.JWT_SECRET;
+const MASTER_KEY  = process.env.MASTER_KEY;
 const SALT_ROUNDS = 10;
+
+if (!JWT_SECRET || !MASTER_KEY) {
+  console.error('[BOOT] JWT_SECRET e MASTER_KEY são obrigatórios (defina em server/.env)');
+  process.exit(1);
+}
 
 app.use(cors());
 app.use(express.json());

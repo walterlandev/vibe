@@ -5,7 +5,7 @@ const jwt     = require('jsonwebtoken');
 const db      = require('./db/db_index');
 
 const SALT_ROUNDS = 10;
-const SECRET      = process.env.JWT_SECRET ?? 'vibe_dev_secret';
+const SECRET      = process.env.JWT_SECRET;
 
 async function register(req, res) {
   const { name, email, password } = req.body;
